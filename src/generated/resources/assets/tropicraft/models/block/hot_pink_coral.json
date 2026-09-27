@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "tropicraft:block/coral/hot_pink_coral"
+  }
+}

@@ -345,6 +345,21 @@ public class TropicraftBlocks {
                 .simpleItem();
     }
 
+    public static final Map<TropicraftCoral, BlockEntry<TropicraftCoralBlock>> CORALS = Arrays.stream(TropicraftCoral.values())
+            .collect(ImmutableMap.toImmutableMap(Function.identity(), coral -> {
+                BlockBuilder<TropicraftCoralBlock, Registrate> builder = REGISTRATE
+                        .block(coral.getId(), p -> new TropicraftCoralBlock(coral.getShape(), p))
+                        .properties(p -> p.offsetType(BlockBehaviour.OffsetType.XZ).noOcclusion().noCollision().instabreak().sound(SoundType.SAND).pushReaction(PushReaction.DESTROY).lightLevel(light -> 7))
+                        .tag(coral.getTags())
+                        .blockstate(() -> Models::generateCoral)
+                        .item()
+                        .model(() -> (ctx, prov) ->
+                                prov.generateFlatItem(ctx.get(), prov.modBlockTexture("coral/" + ctx.getName()))
+                        )
+                        .build();
+                return builder.register();
+            }));
+
     public static final Map<TropicraftFlower, BlockEntry<TropicsFlowerBlock>> FLOWERS = Arrays.stream(TropicraftFlower.values())
             .collect(ImmutableMap.toImmutableMap(Function.identity(), flower -> {
                 BlockBuilder<TropicsFlowerBlock, Registrate> builder = REGISTRATE
@@ -1672,7 +1687,10 @@ public class TropicraftBlocks {
             TextureMapping textures = TextureMapping.cross(prov.modBlockTexture("flower/" + ctx.getName()));
             prov.createCrossBlock(ctx.get(), PlantType.NOT_TINTED, textures);
         }
-
+        private static void generateCoral(DataGenContext<Block, TropicraftCoralBlock> ctx, RegistrateBlockModelGenerator prov) {
+            TextureMapping textures = TextureMapping.cross(prov.modBlockTexture("coral/" + ctx.getName()));
+            prov.createCrossBlock(ctx.get(), PlantType.NOT_TINTED, textures);
+        }
         private static void generatePurifiedSand(DataGenContext<Block, BlockTropicraftSand> ctx, RegistrateBlockModelGenerator prov) {
             Variant normal = plainModel(TexturedModel.CUBE.create(ctx.get(), prov.modelOutput));
             Variant calcified = plainModel(cubeTop(ctx, prov, "_calcified"));
