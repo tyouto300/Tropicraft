@@ -154,7 +154,11 @@ public class TropicraftItems {
                     .unlockedBy("has_azurite", prov.has(AZURITE.get()))
                     .save(prov))
             .register();
-
+    public static final ItemEntry<EncyclopediaItem> ENCYCLOPEDIA = encyclopedia().register();//REGISTRATE.item("encyclopedia", EncyclopediaItem::new)
+    private static ItemBuilder<EncyclopediaItem, Registrate> encyclopedia() {
+        return REGISTRATE.item("encyclopedia_tropica", EncyclopediaItem::new)
+                .properties(p -> p.stacksTo(1));
+    }
     public static final Map<DyeColor, ItemEntry<FurnitureItem<UmbrellaEntity>>> UMBRELLAS = Arrays.stream(DyeColor.values())
             .collect(Maps.<DyeColor, DyeColor, ItemEntry<FurnitureItem<UmbrellaEntity>>>toImmutableEnumMap(Function.identity(), color ->
                     furniture("umbrella", TropicraftEntities.UMBRELLA, color)
