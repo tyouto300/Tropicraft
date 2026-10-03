@@ -630,12 +630,12 @@ public class TropicraftItems {
                 );
     }
 
-    public static final ItemEntry<Item> FIRE_BOOTS = fireArmor("fire_boots", ArmorType.BOOTS).register();
-    public static final ItemEntry<Item> FIRE_LEGGINGS = fireArmor("fire_leggings", ArmorType.LEGGINGS).register();
-    public static final ItemEntry<Item> FIRE_CHESTPLATE = fireArmor("fire_chestplate", ArmorType.CHESTPLATE).register();
-    public static final ItemEntry<Item> FIRE_HELMET = fireArmor("fire_helmet", ArmorType.HELMET).register();
+    public static final ItemEntry<FireArmorItem> FIRE_BOOTS = fireArmor("fire_boots", ArmorType.BOOTS).register();
+    public static final ItemEntry<FireArmorItem> FIRE_LEGGINGS = fireArmor("fire_leggings", ArmorType.LEGGINGS).register();
+    public static final ItemEntry<FireArmorItem> FIRE_CHESTPLATE = fireArmor("fire_chestplate", ArmorType.CHESTPLATE).register();
+    public static final ItemEntry<FireArmorItem> FIRE_HELMET = fireArmor("fire_helmet", ArmorType.HELMET).register();
 
-    public static final ItemEntry<Item> SCALE_BOOTS = scaleArmor("scale_boots", ArmorType.BOOTS)
+    public static final ItemEntry<Item> SCALE_BOOTS = scaleArmor("scale_boots", ArmorType.BOOTS, FIRE_BOOTS)
             .recipe((ctx, prov) -> ShapedRecipeBuilder.shaped(prov.itemLookup(), RecipeCategory.MISC, ctx.get())
                     .pattern("X X")
                     .pattern("X X")
@@ -643,7 +643,7 @@ public class TropicraftItems {
                     .unlockedBy("has_" + prov.safeName(SCALE.get()), prov.has(SCALE.get()))
                     .save(prov))
             .register();
-    public static final ItemEntry<Item> SCALE_LEGGINGS = scaleArmor("scale_leggings", ArmorType.LEGGINGS)
+    public static final ItemEntry<Item> SCALE_LEGGINGS = scaleArmor("scale_leggings", ArmorType.LEGGINGS, FIRE_LEGGINGS)
             .recipe((ctx, prov) -> ShapedRecipeBuilder.shaped(prov.itemLookup(), RecipeCategory.MISC, ctx.get())
                     .pattern("XXX")
                     .pattern("X X")
@@ -652,7 +652,7 @@ public class TropicraftItems {
                     .unlockedBy("has_" + prov.safeName(SCALE.get()), prov.has(SCALE.get()))
                     .save(prov))
             .register();
-    public static final ItemEntry<Item> SCALE_CHESTPLATE = scaleArmor("scale_chestplate", ArmorType.CHESTPLATE)
+    public static final ItemEntry<Item> SCALE_CHESTPLATE = scaleArmor("scale_chestplate", ArmorType.CHESTPLATE, FIRE_CHESTPLATE)
             .recipe((ctx, prov) -> ShapedRecipeBuilder.shaped(prov.itemLookup(), RecipeCategory.MISC, ctx.get())
                     .pattern("X X")
                     .pattern("XXX")
@@ -661,7 +661,7 @@ public class TropicraftItems {
                     .unlockedBy("has_" + prov.safeName(SCALE.get()), prov.has(SCALE.get()))
                     .save(prov))
             .register();
-    public static final ItemEntry<Item> SCALE_HELMET = scaleArmor("scale_helmet", ArmorType.HELMET)
+    public static final ItemEntry<Item> SCALE_HELMET = scaleArmor("scale_helmet", ArmorType.HELMET, FIRE_HELMET)
             .recipe((ctx, prov) -> ShapedRecipeBuilder.shaped(prov.itemLookup(), RecipeCategory.MISC, ctx.get())
                     .pattern("XXX")
                     .pattern("X X")
@@ -677,8 +677,8 @@ public class TropicraftItems {
     public static final ItemEntry<ScubaHarnessItem> PINK_SCUBA_HARNESS = scubaHarness("pink_scuba_harness", ScubaType.PINK, () -> Items.DYE.pink()).register();
     public static final ItemEntry<Item> PINK_SCUBA_FLIPPERS = scubaFlippers("pink_scuba_flippers", ScubaType.PINK, () -> Items.DYE.pink()).register();
 
-    private static ItemBuilder<Item, Registrate> fireArmor(String name, ArmorType slotType) {
-        return simpleItem(name)
+    private static ItemBuilder<FireArmorItem, Registrate> fireArmor(String name, ArmorType slotType) {
+        return REGISTRATE.item(name, properties -> new FireArmorItem(slotType, properties))
                 .properties(p -> TropicraftArmorMaterials.applySafe(p, TropicraftArmorMaterials.FIRE_ARMOR, slotType))
                 .tag(ItemTags.TRIMMABLE_ARMOR)
                 .model(() -> (ctx, prov) ->
@@ -686,16 +686,16 @@ public class TropicraftItems {
                 );
     }
 
-    private static ItemBuilder<Item, Registrate> scaleArmor(String name, ArmorType slotType) {
+    private static ItemBuilder<Item, Registrate> scaleArmor(String name, ArmorType slotType, ItemEntry<? extends Item> convertItem) {
         return simpleItem(name)
-                .properties(p -> TropicraftArmorMaterials.applySafe(p, TropicraftArmorMaterials.SCALE_ARMOR, slotType).component(TropicraftDataComponents.INCOMING_DAMAGE_MODIFIER, new DamageModifier(List.of(
+                .properties(p -> TropicraftArmorMaterials.applySafe(p, TropicraftArmorMaterials.SCALE_ARMOR, slotType).fireResistant().component(TropicraftDataComponents.INCOMING_DAMAGE_MODIFIER, new DamageModifier(List.of(
                         new DamageModifier.Rule(
                                 DamageSourcePredicate.Builder.damageType()
                                         .tag(TagPredicate.is(DamageTypeTags.IS_FIRE))
                                         .build(),
                                 0.0f
                         )
-                ))))
+                ))).component(TropicraftDataComponents.CONVERT_WITH_LAVA, convertItem))
                 .tag(ItemTags.TRIMMABLE_ARMOR)
                 .model(() -> (ctx, prov) ->
                         Models.generateTrimmedArmor(ctx, prov, slotType, TropicraftEquipmentAssets.SCALE)
@@ -938,7 +938,7 @@ public class TropicraftItems {
             ));
         }
 
-        private static void generateTrimmedArmor(DataGenContext<Item, Item> ctx, RegistrateItemModelGenerator prov, ArmorType slotType, ResourceKey<EquipmentAsset> asset) {
+        private static <I extends Item> void generateTrimmedArmor(DataGenContext<Item, I> ctx, RegistrateItemModelGenerator prov, ArmorType slotType, ResourceKey<EquipmentAsset> asset) {
             Identifier prefix = ItemModelGenerators.prefixForSlotTrim(slotType.getSerializedName());
             Identifier baseArmorModel = ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(ctx.get()), TextureMapping.layer0(ctx.get()), prov.modelOutput);
             prov.generateDynamicTrimmableItem(ctx.get(), baseArmorModel, prefix, -1);
