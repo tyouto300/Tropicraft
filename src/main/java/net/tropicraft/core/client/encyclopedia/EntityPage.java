@@ -1,5 +1,6 @@
 package net.tropicraft.core.client.encyclopedia;
 
+import com.tterrag.registrate.util.entry.EntityEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -17,42 +18,37 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import net.tropicraft.Tropicraft;
+import net.tropicraft.core.common.entity.TropicraftEntities;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 import javax.annotation.Nullable;
 import java.util.Optional;
-
+//TODO:Implement a way to discover entity pages, currently you only discover their drops
 public class EntityPage extends ItemPage {
     private static final Identifier PANEL_BG = Identifier.fromNamespaceAndPath(Tropicraft.ID, "textures/block/thatch_side.png");
-    private final Identifier entityId;
+    private  final EntityEntry<? extends LivingEntity> entityEntry;
     private  @Nullable LivingEntity entity;
 
-    public EntityPage(String id, Identifier entityId, ItemStack icon) {
+    public EntityPage(String id, EntityEntry<? extends LivingEntity> entityEntry, ItemStack icon) {
         super(id, icon);
-        this.entityId = entityId;
+        this.entityEntry = entityEntry;
     }
-    protected Identifier getEntityId() { return entityId; }
 
     private LivingEntity makeEntity() {
-        Optional<EntityType<?>> optionalType = BuiltInRegistries.ENTITY_TYPE.getOptional(entityId);
+        EntityType<? extends LivingEntity> type = entityEntry.get();
         LivingEntity ret;
-        if(optionalType.isPresent()) {
-            EntityType<?> realType = optionalType.get();
-            ret =  (LivingEntity) realType.create(Minecraft.getInstance().level, EntitySpawnReason.COMMAND);
-        } else {
-            ret = EntityTypes.ZOMBIE.create(Minecraft.getInstance().level, EntitySpawnReason.COMMAND);
-        }
+        ret = (LivingEntity) type.create(Minecraft.getInstance().level, EntitySpawnReason.COMMAND);
         ret.setId(ret.level().getRandom().nextInt());
         return ret;
     }
 
     protected void drawEntity(GuiGraphicsExtractor graphics, int x, int y, float mouseX, float mouseY) {
         if (entity == null) {entity = makeEntity();}
-        x += 67;
+        x += 35;
         y -= 2;
-        int x2 = x + 32;
-        int y2 = y + getHeaderHeight();
+        int x2 = x + 67;
+        int y2 = y + getHeaderHeight() + 10;
 
         float centerX = (float)(x + x2) / 2.0F;
         float centerY = (float)(y + y2) / 2.0F;
@@ -79,14 +75,13 @@ public class EntityPage extends ItemPage {
 
         Vector3f translation = new Vector3f(0.0F, renderState.boundingBoxHeight / 2.0F + 0.0625F, 0.0F);
 
-        graphics.entity(renderState, 20F, translation, rotation, xRotation, x, y, x2, y2);
+        graphics.entity(renderState, 30F, translation, rotation, xRotation, x, y, x2, y2);
     }
 
     private static EntityRenderState extractRenderState(LivingEntity entity) {
         EntityRenderDispatcher renderDispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
         EntityRenderer<? super LivingEntity, ?> renderer = renderDispatcher.getRenderer(entity);
-        EntityRenderState renderState = renderer.createRenderState(entity, 1.0F);
-        return renderState;
+        return renderer.createRenderState(entity, 1.0F);
     }
 
     @Override
@@ -97,13 +92,4 @@ public class EntityPage extends ItemPage {
                 0,0,106, getHeaderHeight() + 10, 16, 16);
         drawEntity(graphics, x ,y, mouseX, mouseY);
     }
-
-    @Override
-    public String getLocalizedTitle() {
-        if (entity == null) {
-            entity = makeEntity();
-        }
-        return Component.translatableWithFallback(super.getLocalizedTitle(), entity.getDisplayName().toString()).toString();
-    }
-
 }

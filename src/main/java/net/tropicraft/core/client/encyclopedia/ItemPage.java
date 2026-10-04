@@ -34,16 +34,14 @@ public class ItemPage extends SimplePage {
     }
     protected ItemStack getStack() { return stack; }
     //rendering
-    public void extractIcon(GuiGraphicsExtractor graphics, int xo, int yo) {
+    /*public void extractIcon(GuiGraphicsExtractor graphics, int xo, int yo) {
         graphics.fakeItem(stack, xo, yo);
-    }
+    }*/
 
     //CLIENT SIDE ONLY
     @Override
     public void drawIcon(GuiGraphicsExtractor graphics, int x, int y, float cycle) {
-
         graphics.item(stack, x, y);
-
     }
 
     @Override

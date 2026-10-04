@@ -567,5 +567,12 @@
   "scuba.tropicraft.max_depth": "Max Depth: %s",
   "scuba.tropicraft.scuba.visibility": "Underwater Fog Reduction",
   "tropicraft.container.bambooChest": "Bamboo Chest",
-  "tropicraft.container.bambooChestDouble": "Large Bamboo Chest"
+  "tropicraft.container.bambooChestDouble": "Large Bamboo Chest",
+  "tropicraft.encyclopedia..tropicraft.encyclopedia.desc": "The Encyclopedia Tropica is the source for information about the Tropics many items. Having been printed with magical ink, the book writes itself as you acquire the item. New Entries will be blue, and you can navigate the pages using the tabs on the sides of the book. Items that are craftable will have an anvil tab.",
+  "tropicraft.encyclopedia..tropicraft.encyclopedia.title": "About Encyclopedia",
+  "tropicraft.encyclopedia..tropicraft.iguana.desc": "These neutral lizards like to hang around the tropics. I wonder if their scales could be used for anything?",
+  "tropicraft.encyclopedia..tropicraft.iguana.title": "Iguana",
+  "tropicraft.encyclopedia..tropicraft.section.food.title": "Tropical Food",
+  "tropicraft.encyclopedia..tropicraft.unknown.desc": "Page not found",
+  "tropicraft.encyclopedia..tropicraft.unknown.title": "???"
 }

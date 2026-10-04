@@ -39,6 +39,7 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.tropicraft.core.client.TropicraftEquipmentAssets;
+import net.tropicraft.core.client.data.TropicraftEncyclopediaLangKeys;
 import net.tropicraft.core.client.data.TropicraftLangKeys;
 import net.tropicraft.core.client.entity.render.BambooItemFrameRenderer;
 import net.tropicraft.core.common.TropicraftPackRegistries;
@@ -73,6 +74,7 @@ import net.tropicraft.core.common.dimension.feature.tree.TropicraftFoliagePlacer
 import net.tropicraft.core.common.dimension.feature.tree.TropicraftTreeDecorators;
 import net.tropicraft.core.common.dimension.feature.tree.TropicraftTrunkPlacers;
 import net.tropicraft.core.common.drinks.action.TropicraftDrinkActions;
+import net.tropicraft.core.common.encyclopedia.TropicalBook;
 import net.tropicraft.core.common.entity.TropicraftEntities;
 import net.tropicraft.core.common.item.TropicraftItems;
 import net.tropicraft.core.common.item.component.TropicraftDataComponents;
@@ -87,16 +89,16 @@ import java.util.regex.Pattern;
 @Mod(Tropicraft.ID)
 public class Tropicraft {
     public static final String ID = "tropicraft";
-
+    //public static TropicalBook encyclopedia;
     public static final ProviderType<RegistrateTagsProvider.Impl<Biome>> BIOME_TAGS = ProviderType.registerTag("tags/biome", "biome", Registries.BIOME);
     public static final ProviderType<RegistrateTagsProvider.Impl<Timeline>> TIMELINE_TAGS = ProviderType.registerTag("tags/timeline", "timeline", Registries.TIMELINE);
-
     public static final ResourceKey<CreativeModeTab> CREATIVE_TAB = resourceKey(Registries.CREATIVE_MODE_TAB, ID);
 
     private static final Supplier<Registrate> REGISTRATE = Suppliers.memoize(() -> {
         Registrate registrate = Registrate.create(ID)
                 .defaultCreativeTab(CREATIVE_TAB.identifier().getPath(), builder -> builder.icon(() -> new ItemStack(TropicraftBlocks.PALM_SAPLING.get()))).build()
                 .addDataGenerator(ProviderType.LANG, TropicraftLangKeys::generate)
+                .addDataGenerator(ProviderType.LANG, TropicraftEncyclopediaLangKeys::generate)
                 .addDataGenerator(ProviderType.GENERIC_CLIENT, prov -> prov.add(data ->
                         new TropicraftEquipmentAssets.Provider(data.output()))
                 );
@@ -154,6 +156,9 @@ public class Tropicraft {
         modBus.addListener((AddPackFindersEvent event) ->
                 event.addPackFinders(id("resourcepacks/tropicraft_texture_update"), PackType.CLIENT_RESOURCES, TropicraftLangKeys.TEXTURE_UPDATE_PACK.component(), PackSource.BUILT_IN, false, Pack.Position.TOP)
         );
+
+        //Encyclopedia
+        //registerBook();
     }
 
     private static final Pattern QUALIFIER = Pattern.compile("-\\w+\\+\\d+");
@@ -208,4 +213,7 @@ public class Tropicraft {
             );
         }
     }
+    /*private void registerBook(){
+        encyclopedia = new TropicalBook("etsave.dat", "textures/gui/encyclopedia/encyclopedia_tropica_inside.png", "textures/gui/encyclopedia/encyclopedia_tropica_outside.png");
+    }*/
 }

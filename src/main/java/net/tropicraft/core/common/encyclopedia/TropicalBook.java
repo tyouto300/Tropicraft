@@ -1,8 +1,15 @@
-package net.tropicraft.core.client.encyclopedia;
+package net.tropicraft.core.common.encyclopedia;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
+
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.tropicraft.core.client.encyclopedia.Page;
 import org.apache.logging.log4j.LogManager;
+import org.jspecify.annotations.NonNull;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -35,7 +42,7 @@ public class TropicalBook {
     public String outsideTexture;
     public String insideTexture;
 
-    public TropicalBook(String saveFile, String outsideTexture, String insideTexture) {
+    public TropicalBook(String saveFile, String insideTexture, String outsideTexture) {
         fileName = saveFile;
         this.outsideTexture = outsideTexture;
         this.insideTexture = insideTexture;
@@ -56,6 +63,7 @@ public class TropicalBook {
     }
     protected File getSaveFile() {
         File root = null;//DimensionManager.getCurrentSaveRootDirectory();
+
         if (root == null) {
             ServerData serverData = Minecraft.getInstance().getCurrentServer();
             if (serverData == null) {
@@ -115,8 +123,10 @@ public class TropicalBook {
                     CompressedStreamTools.writeCompressed(data, dataOutput);
 
                      */
+
                 }
             }
+
         } catch (IllegalStateException | IOException ex) {
             LogManager.getLogger().error("Error writing encyclopedia data.", ex);
         }
@@ -146,7 +156,17 @@ public class TropicalBook {
         visibilities.remove(entry);
         saveData();
     }
+    public void discoverPages(@NonNull Level level, @NonNull Player player) {
+        for(Map.Entry<String, Page> e : pages.entrySet()) {
+            if (!isPageVisible(e.getKey()) && e.getValue().discover(level, player)) {
+                markPageAsNewlyVisible(e.getKey());
+                Page bookmark = pageToBookmark.get(e.getValue());
+                if (bookmark != null) {
+                    markPageAsRead(bookmark.getId());
+                }
+            }
+        }
+    }
     public void hidePage(int i) { hidePage(getPageName(i)); }
     public boolean pageExists(String name) { return pages.containsKey(name); }
-    public String getPageTitleNotVisible() { return "Page not found";}
 }
