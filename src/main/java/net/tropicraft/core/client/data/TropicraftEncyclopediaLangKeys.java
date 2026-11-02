@@ -1,15 +1,20 @@
 package net.tropicraft.core.client.data;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.tterrag.registrate.providers.RegistrateLangProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.util.Util;
 import net.tropicraft.Tropicraft;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
+import java.util.List;
 
-public enum TropicraftEncyclopediaLangKeys {
+public enum TropicraftEncyclopediaLangKeys implements StringRepresentable {
     UNKNOWN("unknown", "???", "Page not found"),
     //Section page entries
     TROPICAL_FOOD("section.food","Tropical Food"),
@@ -21,14 +26,16 @@ public enum TropicraftEncyclopediaLangKeys {
     IGUANA("iguana", "Iguana", "These neutral lizards like to hang around the tropics. I wonder if their scales could be used for anything?")
     ;
     //section + title is the translation key
-    //TODO:investigate using EnumHashMap as a way to quickly register all pages
     private final String titleKey;
-    private final String title;
+    public final String title;
     private final Component titleComponent;
     private final @Nullable String descKey;
     private final @Nullable String desc;
     private final @Nullable Component descComponent;
 
+    //Add Codec here
+    //public static final Codec<List<String>> CODEC = Codec.STRING.flatXmap(values()..map(value -> value.title);
+    public static final Codec<TropicraftEncyclopediaLangKeys> CODEC = StringRepresentable.fromEnum(TropicraftEncyclopediaLangKeys::values);
     //Intended for section pages, who only need one entry in the lang table
     TropicraftEncyclopediaLangKeys(String sectionName, String sectionTitle) {
         //add section + sectionName . title to the translation key
@@ -51,6 +58,7 @@ public enum TropicraftEncyclopediaLangKeys {
             descComponent = null;
         }
     }
+
     public static TropicraftEncyclopediaLangKeys getUnknown() { return TropicraftEncyclopediaLangKeys.UNKNOWN; }
     public static TropicraftEncyclopediaLangKeys get(String name) {
         try {
@@ -64,11 +72,17 @@ public enum TropicraftEncyclopediaLangKeys {
     public Component getDesc() { return descComponent; }
     public MutableComponent formatTitle(ChatFormatting format) { return titleComponent.copy().withStyle(format);}
 
+
     public static void generate(RegistrateLangProvider prov) {
         for(TropicraftEncyclopediaLangKeys lang : values()) {
             prov.add(lang.titleKey, lang.title);
             if(lang.descKey != null) { prov.add(lang.descKey, lang.desc); }
         }
 
+    }
+
+    @Override
+    public String getSerializedName() {
+        return title;
     }
 }

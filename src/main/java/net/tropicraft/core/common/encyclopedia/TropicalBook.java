@@ -109,20 +109,20 @@ public class TropicalBook {
     }
 
      */
-    private void saveData() {
+    /*private void saveData() {
         try {
             File dataFile = getSaveFile();
             dataFile.getParentFile().mkdirs();
             dataFile.createNewFile();
             if (dataFile.canWrite()) {
                 try (OutputStream dataOutput = new FileOutputStream(dataFile)) {
-                    /*NBTTagCompound data = new NBTTagCompound();
+                    NBTTagCompound data = new NBTTagCompound();
                     for (String s : visibilities.keySet()) {
                         data.setByte(s, (byte) visibilities.get(s).ordinal());
                     }
                     CompressedStreamTools.writeCompressed(data, dataOutput);
 
-                     */
+
 
                 }
             }
@@ -130,7 +130,7 @@ public class TropicalBook {
         } catch (IllegalStateException | IOException ex) {
             LogManager.getLogger().error("Error writing encyclopedia data.", ex);
         }
-    }
+    }*/
     public boolean isPageVisible(String entry) {
         return visibilities.containsKey(entry) && visibilities.get(entry) != ReadState.HIDDEN;
     }
@@ -144,18 +144,16 @@ public class TropicalBook {
     public void markPageAsNewlyVisible(String entry) {
         Page page = getPage(entry);
         visibilities.put(entry, page == null || !page.isBookmark() ? ReadState.VISIBLE : ReadState.READ);
-        saveData();
     }
     public void markPageAsNewlyVisible(int i) { markPageAsNewlyVisible(getPageName(i)); }
     public void markPageAsRead(String entry) {
         visibilities.put(entry, ReadState.READ);
-        saveData();
     }
     public void markPageAsRead(int i) { markPageAsRead(getPageName(i)); }
     public void hidePage(String entry) {
         visibilities.remove(entry);
-        saveData();
     }
+    public void hidePage(int i) { hidePage(getPageName(i)); }
     public void discoverPages(@NonNull Level level, @NonNull Player player) {
         for(Map.Entry<String, Page> e : pages.entrySet()) {
             if (!isPageVisible(e.getKey()) && e.getValue().discover(level, player)) {
@@ -167,6 +165,5 @@ public class TropicalBook {
             }
         }
     }
-    public void hidePage(int i) { hidePage(getPageName(i)); }
     public boolean pageExists(String name) { return pages.containsKey(name); }
 }
