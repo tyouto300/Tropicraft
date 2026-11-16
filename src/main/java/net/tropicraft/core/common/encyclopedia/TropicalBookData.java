@@ -7,8 +7,10 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
@@ -24,65 +26,73 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/*
-TropicalBook(TB) is responsible for serving loaded pages to the GuiTropicalBook(GTB), which is responsible for displaying them to the client.
-TropicalBook is also responsible for initiating/requesting data writes to the saved data.
-Should only be one TB object created, and it is on the server side.
-TropicalBookSavedData(TBSD) is responsible for managing the written data. It is the one that actually writes and updates data(on request from TropicalBook),
-it is responsible for reading the data(on request from TropicalBook) and sending the pages that are visible.
-
-Thus, TBSD is the one who maintains an internal mapping of strings representing page names(from TropicraftEncyclopediaLangKeys) along with a
-tri-state(or maybe rather boolean) value representing the state of that page(read, newly visible, hidden).
-TBSD should have an attribute regarding who it belongs to.
-While the gui is open, the TBSD should not be updated or else it would break the viewing. Test with this, maybe it can rewrite fast enough
-or pause the screen while it does.
-When updating the TBSD, everything unfortunately must be rewritten at once, hence why I should try to group the rewrite requests together to rewrite
-the least amount of times for the most changes
-*/
 @EventBusSubscriber(modid = Tropicraft.ID)
 public class TropicalBookData{
     private boolean dirty;
-    private List<String> pageNames; //Arrays.stream(TropicraftEncyclopediaLangKeys.values()).map(value -> value.title).toList();
-    //Id rather this be integers instead that map to read states
-    private List<String> readStates;
+    private Map<String, ReadState> pageStates;
+
     public static final MapCodec<TropicalBookData> CODEC = RecordCodecBuilder.mapCodec( i -> i.group(
             Codec.STRING.listOf().fieldOf("pageNames").forGetter(TropicalBookData::getPageNames),
-            //TropicraftEncyclopediaLangKeys.CODEC.listOf().fieldOf("pageNames").forGetter(TropicalBookData::getPageNames)
-            //ReadState.CODEC.listOf().fieldOf("readStates").forGetter(TropicalBookData::getReadStates)
-            Codec.STRING.listOf().fieldOf("visibilities").forGetter(TropicalBookData::getReadStates)
-            ).apply(i, TropicalBookData::new));
-    public static final StreamCodec<ByteBuf, Map<String, String>> MAP_STREAM_CODEC = ByteBufCodecs.map(
-        HashMap::new,
-            ByteBufCodecs.STRING_UTF8,
-            ByteBufCodecs.STRING_UTF8
+            Codec.STRING.listOf().fieldOf("readStates").forGetter(TropicalBookData::getReadStates)
+            ).apply(i, TropicalBookData::new)
+            );
+    public static final StreamCodec<ByteBuf, TropicalBookData> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()),
+            TropicalBookData::getPageNames,
+            ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs.list()),
+            TropicalBookData::getReadStates,
+            TropicalBookData::new
     );
-    //public static final Codec<Map<TropicraftEncyclopediaLangKeys, ReadState>> CODEC = Codec.unboundedMap(TropicraftEncyclopediaLangKeys.CODEC, ReadState.CODEC);
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES = DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, Tropicraft.ID);
     public static final Supplier<AttachmentType<TropicalBookData>> ATTACHMENT = ATTACHMENT_TYPES.register(
-        "tropical_book_data", () -> AttachmentType.builder(TropicalBookData::new).serialize(CODEC).build()
+        "tropical_book_data", () -> AttachmentType.builder((Supplier<TropicalBookData>) TropicalBookData::new).serialize(CODEC).build()
     );
+
+    //Instead of having two lists stored in player data separately, write as pageName:readState
     //Possibly move to only writing the page names of those that have a state other than hidden
     public List<String> getPageNames() {
-        return Arrays.stream(TropicraftEncyclopediaLangKeys.values()).map(value -> value.title).toList();
-         //return pageNames;
+        return pageStates.keySet().stream().toList();
+    }
+    public void updateReadState(String pageName) {
+        int stateNum = pageStates.get(pageName).getState();
+        pageStates.put(pageName,
+                ReadState.byStateNum(Math.min(stateNum + 1, ReadState.values().length)));
+    }
+    public void setReadState(String pageName, ReadState readState) {
+        pageStates.put(pageName, readState);
     }
     public List<String> getReadStates() {
-        return readStates;
+        return pageStates.values().stream().map(ReadState::getSerializedName).toList();
     }
-
+    public Map<String, ReadState> getPageStates() {
+        return pageStates;
+    }
     void updateClient(ServerPlayer target, boolean force) {
         if (dirty || force) {
-            PacketDistributor.sendToPlayer(target, new ClientboundUpdateEncyclopediaPacket(createMap()));
+            PacketDistributor.sendToPlayer(target, new ClientboundUpdateEncyclopediaPacket(this));
         }
     }
-    private Map<String, String> createMap() {
+    /*private Map<String, String> createMap() {
         Map<String, String> map = new HashMap<>();
-        Iterator<String> pageIterator = pageNames.iterator();
-        Iterator<String> visibilityIterator = readStates.iterator();
-        //both will have the same size, just redundant implmentation until it can be improved
-        while(pageIterator.hasNext() && visibilityIterator.hasNext()) {
-            map.put(pageIterator.next(), visibilityIterator.next());
+        for ( String pageName : pageStates.keySet()) {
+            map.put(pageName, pageStates.get(pageName).getSerializedName());
+        }
+        return map;
+    }*/
+    private Map<String, ReadState> initMap() {
+        Map<String, ReadState> map = new HashMap<>();
+        Iterator<String> pageIterator = Arrays.stream(TropicraftEncyclopediaLangKeys.values()).map(value -> value.title)
+                .toList().iterator();
+        while (pageIterator.hasNext()) {
+            map.put(pageIterator.next(), ReadState.HIDDEN);
+        }
+        return map;
+    }
+    private Map<String, ReadState> recreateMap(List<String> pgNames, List<String> visibilities) {
+        Map<String,ReadState> map = new HashMap<>();
+        for(int i = 0; i < pgNames.size();i++) {
+            map.put(pgNames.get(i), ReadState.valueOf(visibilities.get(i)));
         }
         return map;
     }
@@ -90,21 +100,30 @@ public class TropicalBookData{
         pageNames = data.getPageNames();
         readStates = data.getReadStates();
     }*/
-    public void copyFrom(Map<String, String> map) {
-        pageNames = map.keySet().stream().toList();
-        readStates = map.values().stream().toList();
+    public void copyFrom(TropicalBookData data) {
+        pageStates = data.getPageStates();
     }
-        public TropicalBookData() {
-            pageNames = Arrays.stream(TropicraftEncyclopediaLangKeys.values()).map(value -> value.title).toList();
+    public void copyFrom(Map<String, ReadState> map) {
+        pageStates = map;
+    }
+    public TropicalBookData() {
+        //pageNames = Arrays.stream(TropicraftEncyclopediaLangKeys.values()).map(value -> value.title).toList();
+        //readStates = pageNames.stream().map(value -> ReadState.HIDDEN).toList();
+        pageStates = initMap();
+    }
+    public TropicalBookData(List<String> pageNames, List<String> readStates) {
+        pageStates = recreateMap(pageNames, readStates);
+    }
+    public TropicalBookData(Map<String,ReadState> map) {
+        pageStates = map;
+    }
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event){ updateClient(event);}
+    private static void updateClient(PlayerEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            player.getData(ATTACHMENT).updateClient(player, true);
         }
-        public TropicalBookData(List<String> pageNames, List<String> readStates) {
-
-            this.pageNames = pageNames;
-            //this.pageNames = Arrays.stream(TropicraftEncyclopediaLangKeys.values()).map(value -> value.title).toList();
-            this.readStates = readStates;
-            //this.readStates = new ArrayList<ReadState>(pageNames.size());
-        }
-
+    }
         //note for future: When implementing the book writing itself on item pickup, do it with packets. When an item is picked up, wait a little bit(some ticks)
         //before sending the update packet in case it turns out you write another one and maybe have to recreate the whole savedData map or something. idk just a thought
 

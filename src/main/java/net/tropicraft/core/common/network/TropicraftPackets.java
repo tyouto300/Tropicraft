@@ -10,6 +10,7 @@ import net.tropicraft.core.common.network.message.ClientboundMixerInventoryPacke
 import net.tropicraft.core.common.network.message.ClientboundMixerStartPacket;
 import net.tropicraft.core.common.network.message.ClientboundSifterInventoryPacket;
 import net.tropicraft.core.common.network.message.ClientboundSifterStartPacket;
+import net.tropicraft.core.common.network.message.ClientboundUpdateEncyclopediaPacket;
 import net.tropicraft.core.common.network.message.ClientboundUpdateScubaDataPacket;
 
 @EventBusSubscriber(modid = Tropicraft.ID)
@@ -23,5 +24,6 @@ public class TropicraftPackets {
         registrar.playToClient(ClientboundMixerStartPacket.TYPE, ClientboundMixerStartPacket.STREAM_CODEC, ClientboundMixerStartPacket::handle);
         registrar.playToClient(ClientboundAirCompressorInventoryPacket.TYPE, ClientboundAirCompressorInventoryPacket.STREAM_CODEC, ClientboundAirCompressorInventoryPacket::handle);
         registrar.playToClient(ClientboundUpdateScubaDataPacket.TYPE, ClientboundUpdateScubaDataPacket.STREAM_CODEC, ClientboundUpdateScubaDataPacket::handle);
+        registrar.playToClient(ClientboundUpdateEncyclopediaPacket.TYPE, ClientboundUpdateEncyclopediaPacket.STREAM_CODEC, ClientboundUpdateEncyclopediaPacket::handle);
     }
 }

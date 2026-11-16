@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum TropicraftEncyclopediaLangKeys implements StringRepresentable {
+    //TODO:Rework page titles so that spaces have an underscore, which is filtered out when displaying in gui
     UNKNOWN("unknown", "???", "Page not found"),
     //Section page entries
     TROPICAL_FOOD("section.food","Tropical Food"),
@@ -33,8 +34,6 @@ public enum TropicraftEncyclopediaLangKeys implements StringRepresentable {
     private final @Nullable String desc;
     private final @Nullable Component descComponent;
 
-    //Add Codec here
-    //public static final Codec<List<String>> CODEC = Codec.STRING.flatXmap(values()..map(value -> value.title);
     public static final Codec<TropicraftEncyclopediaLangKeys> CODEC = StringRepresentable.fromEnum(TropicraftEncyclopediaLangKeys::values);
     //Intended for section pages, who only need one entry in the lang table
     TropicraftEncyclopediaLangKeys(String sectionName, String sectionTitle) {
@@ -43,7 +42,7 @@ public enum TropicraftEncyclopediaLangKeys implements StringRepresentable {
     }
     //intended for entry pages, with a translatable title and description
     TropicraftEncyclopediaLangKeys(String name, String title, @Nullable String desc) {
-        //add name . title and name . desc to key
+        //add tropicraft . name . title and name . desc as key
         this.titleKey = Util.makeDescriptionId(Tropicraft.ID + ".encyclopedia.", Tropicraft.id(name + ".title"));
         this.title = title;
         this.titleComponent = Component.translatable(titleKey);

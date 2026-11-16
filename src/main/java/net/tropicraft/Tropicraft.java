@@ -75,6 +75,7 @@ import net.tropicraft.core.common.dimension.feature.tree.TropicraftTreeDecorator
 import net.tropicraft.core.common.dimension.feature.tree.TropicraftTrunkPlacers;
 import net.tropicraft.core.common.drinks.action.TropicraftDrinkActions;
 import net.tropicraft.core.common.encyclopedia.TropicalBook;
+import net.tropicraft.core.common.encyclopedia.TropicalBookData;
 import net.tropicraft.core.common.entity.TropicraftEntities;
 import net.tropicraft.core.common.item.TropicraftItems;
 import net.tropicraft.core.common.item.component.TropicraftDataComponents;
@@ -148,6 +149,7 @@ public class Tropicraft {
         TropicraftStructureTypes.REGISTER.register(modBus);
         TropicraftStructurePieceTypes.REGISTER.register(modBus);
         ScubaData.ATTACHMENT_TYPES.register(modBus);
+        TropicalBookData.ATTACHMENT_TYPES.register(modBus);
         TropicraftDataComponents.REGISTER.register(modBus);
         TropicraftDrinkActions.REGISTER.register(modBus);
 
@@ -213,7 +215,5 @@ public class Tropicraft {
             );
         }
     }
-    /*private void registerBook(){
-        encyclopedia = new TropicalBook("etsave.dat", "textures/gui/encyclopedia/encyclopedia_tropica_inside.png", "textures/gui/encyclopedia/encyclopedia_tropica_outside.png");
-    }*/
+
 }
